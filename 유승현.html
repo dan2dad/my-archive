@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>유승현 아카이브</title>
+    <!-- Noto Sans KR 폰트 추가 (Light 300, Regular 400, Bold 700) -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* 기본 스타일 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin-left: 300px;
+            padding: 2rem;
+        }
+
+        /* 검색창 스타일 */
+        .search-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-input {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0;
+            backdrop-filter: blur(10px);
+            width: 200px;
+            margin: 0;
+        }
+
+        .search-input input {
+            width: 100%;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            background: transparent;
+            color: white;
+            font-size: 0.7rem;
+        }
+
+        .search-input input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.7rem;
+        }
+
+        .search-input input:focus {
+            outline: none;
+        }
+
+        .category-select {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.8rem 1.5rem;
+            border: none;
+            color: white;
+            font-size: 0.7rem;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            width: 200px;
+            margin: 0;
+        }
+
+        .category-select option {
+            background: #1E1E1E;
+            color: white;
+            font-size: 0.7rem;
+        }
+
+        @media (max-width: 768px) {
+            .search-container {
+                flex-direction: column;
+                align-items: center;
+                max-width: 100%;
+                margin: 0 1rem 2rem;
+            }
+            
+            .search-input,
+            .category-select {
+                width: 200px;
+            }
+        }
+
+        h1 {
+            text-align: center;
+            color: #ffffff;
+            margin-bottom: 2rem;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        /* 포스트 폼 스타일 */
+        .post-form {
+            background: #1E1E1E;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            margin-bottom: 2rem;
+        }
+
+        .post-form input[type="text"],
+        .post-form input[type="date"],
+        .post-form textarea {
+            width: 100%;
+            padding: 0.8rem;
+            margin-bottom: 1rem;
+            border: 1px solid #333;
+            border-radius: 6px;
+            font-size: 1rem;
+            background: #2C2C2C;
+            color: white;
+            transition: border-color 0.3s ease;
+        }
+
+        .post-form textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .post-form input:focus,
+        .post-form textarea:focus {
+            outline: none;
+            border-color: #00FF00;
+            box-shadow: 0 0 0 2px rgba(0, 255, 0, 0.2);
+        }
+
+        .post-form button {
+            background-color: #00FF00;
+            color: #000000;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+            width: 100%;
+        }
+
+        .post-form button:hover {
+            background-color: #33FF33;
+        }
+
+        /* 포스트 목록 스타일 */
+        .post {
+            background: #1E1E1E;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .post:hover {
+            transform: translateY(-5px);
+        }
+
+        .post h2 {
+            color: #ffffff;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+        }
+
+        .post .category {
+            display: inline-block;
+            background-color: #00FF00;
+            color: #000000;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .post .date {
+            color: #B0B0B0;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .post-content {
+            color: #ffffff;
+            margin-bottom: 1.5rem;
+            line-height: 1.8;
+        }
+
+        .post-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .post-images img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .post-images img:hover {
+            transform: scale(1.05);
+        }
+
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            margin-bottom: 1.5rem;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .insta-link {
+            display: inline-block;
+            background-color: #00FF00;
+            color: #000000;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+
+        .insta-link:hover {
+            background-color: #33FF33;
+        }
+
+        /* 모달 스타일 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            padding: 2rem;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90vh;
+            margin: auto;
+            display: block;
+            position: relative;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .close {
+            position: absolute;
+            right: 2rem;
+            top: 2rem;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .post {
+                padding: 1.5rem;
+            }
+
+            .post h2 {
+                font-size: 1.5rem;
+            }
+
+            .post-images {
+                grid-template-columns: 1fr;
+            }
+
+            .search-container {
+                width: 150px;
+                top: 0.5rem;
+                right: 0.5rem;
+            }
+            
+            .profile-image {
+                width: 100%;
+                height: 150px;
+            }
+        }
+
+        /* 플로팅 버튼 스타일 */
+        .floating-button {
+            position: fixed;
+            right: 2rem;
+            bottom: 2rem;
+            width: 60px;
+            height: 60px;
+            background-color: #00FF00;
+            color: #000000;
+            border: none;
+            border-radius: 50%;
+            font-size: 2rem;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 255, 0, 0.3);
+            transition: transform 0.3s ease, background-color 0.3s ease;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .floating-button:hover {
+            transform: scale(1.1);
+            background-color: #33FF33;
+        }
+
+        /* 모달 폼 스타일 */
+        .post-form-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .post-form-modal .post-form {
+            max-width: 800px;
+            margin: 2rem auto;
+            background: #1E1E1E;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .post-form-modal .close-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        @media (max-width: 768px) {
+            .floating-button {
+                right: 1rem;
+                bottom: 1rem;
+                width: 50px;
+                height: 50px;
+                font-size: 1.5rem;
+            }
+        }
+
+        /* 좌측 배너 스타일 */
+        .banner {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 300px;
+            height: 100vh;
+            background-image: url('https://i1.sndcdn.com/artworks-srw9mHssrZ1KrxqP-5cyQMA-t500x500.jpg');
+            background-size: cover;
+            background-position: center;
+            z-index: 1;
+        }
+
+        /* 모바일 대응 */
+        @media (max-width: 768px) {
+            .banner {
+                display: none;
+            }
+            .container {
+                margin-left: 0;
+            }
+        }
+
+        /* 우측 상단 이미지들 스타일 */
+        .right-top-image {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 200px;
+            height: 200px;
+            z-index: 999;
+            background-image: url('./images/cat.jpg');
+            background-size: cover;
+            background-position: center;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+        }
+
+        .right-second-image {
+            position: fixed;
+            top: 240px;
+            right: 20px;
+            width: 200px;
+            height: 200px;
+            z-index: 999;
+            background-image: url('./images/me.jpg');
+            background-size: cover;
+            background-position: center;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+        }
+
+        @media (max-width: 768px) {
+            .right-top-image,
+            .right-second-image {
+                display: none;
+            }
+        }
+
+        /* 기존 프로필 이미지 스타일 제거 */
+        .profile-image {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="banner"></div>
+    <div class="right-top-image"></div>
+    <div class="right-second-image"></div>
+    <div class="container">
+        <h1>유승현 아카이브</h1>
+        <div class="search-container">
+            <div class="search-input">
+                <input type="search" id="searchInput" placeholder="검색...">
+            </div>
+            <select class="category-select" id="categoryFilter">
+                <option value="">전체 카테고리</option>
+                <option value="기초디자인">기초디자인</option>
+                <option value="컴퓨터그래픽스">컴퓨터 그래픽스</option>
+                <option value="디지털프로그래밍">디지털 프로그래밍</option>
+                <option value="평면조형">평면 조형</option>
+                <option value="기초타이포그래피">기초타이포그래피</option>
+                <option value="디지털드로잉">디지털 드로잉</option>
+                <option value="디자인제작기초">디자인 제작 기초</option>
+            </select>
+        </div>
+        <div id="posts"></div>
+    </div>
+
+    <!-- 이미지 모달 -->
+    <div id="imageModal" class="modal">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <img id="modalImage" class="modal-content">
+    </div>
+
+    <!-- 플로팅 글쓰기 버튼 -->
+    <button class="floating-button" onclick="openPostForm()">+</button>
+
+    <!-- 글쓰기 모달 폼 -->
+    <div id="postFormModal" class="post-form-modal">
+        <span class="close-button" onclick="closePostForm()">&times;</span>
+        <div class="post-form">
+            <h2 style="color: white; margin-bottom: 20px;">새 게시물 작성</h2>
+            <input type="text" id="title" placeholder="제목">
+            <textarea id="content" placeholder="내용"></textarea>
+            <input type="text" id="category" placeholder="카테고리">
+            <input type="date" id="date">
+            <input type="text" id="videoUrl" placeholder="유튜브 URL">
+            <input type="text" id="instaLink" placeholder="인스타그램 링크">
+            <input type="file" id="images" multiple accept="image/*">
+            <button onclick="submitPost()">포스트 작성</button>
+        </div>
+    </div>
+
+    <!-- 로딩 표시기 추가 -->
+    <div id="loadingIndicator" class="loading">저장 중...</div>
+
+    <script>
+        // Supabase 초기화
+        const supabaseUrl = 'https://oqsxcqdjvhejzpgejahz.supabase.co'
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xc3hjcWRqdmhlanpwZ2VqYWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1NDI1NDYsImV4cCI6MjA1ODExODU0Nn0.bimQtRAYdZ-3gVOtbfKudzhkmM-9I2VfXhw5sreLYR4'
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey)
+
+        // 포스트 제출 함수
+        async function submitPost() {
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+            const category = document.getElementById('category').value;
+            const date = document.getElementById('date').value;
+            const videoUrl = document.getElementById('videoUrl').value;
+            const instaLink = document.getElementById('instaLink').value;
+            const imageFiles = document.getElementById('images').files;
+
+            if (!title || !content || !category || !date) {
+                alert('필수 항목을 모두 입력해주세요.');
+                return;
+            }
+
+            try {
+                // 1. 포스트 데이터 저장
+                const { data: post, error: postError } = await supabase
+                    .from('posts')
+                    .insert([
+                        {
+                            title,
+                            content,
+                            category,
+                            date,
+                            video_url: videoUrl,
+                            insta_link: instaLink
+                        }
+                    ])
+                    .select()
+                    .single();
+
+                if (postError) throw postError;
+
+                // 2. 이미지 업로드 및 저장
+                for (let i = 0; i < imageFiles.length; i++) {
+                    const file = imageFiles[i];
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${post.id}/${Date.now()}_${i}.${fileExt}`;
+                    const filePath = `${fileName}`;
+
+                    // 이미지 업로드
+                    const { error: uploadError } = await supabase.storage
+                        .from('images')
+                        .upload(filePath, file);
+
+                    if (uploadError) throw uploadError;
+
+                    // 이미지 URL 가져오기
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('images')
+                        .getPublicUrl(filePath);
+
+                    // 이미지 데이터베이스에 저장
+                    const { error: imageError } = await supabase
+                        .from('images')
+                        .insert([
+                            {
+                                post_id: post.id,
+                                image_url: publicUrl
+                            }
+                        ]);
+
+                    if (imageError) throw imageError;
+                }
+
+                // 3. 폼 초기화 및 포스트 목록 새로고침
+                document.getElementById('title').value = '';
+                document.getElementById('content').value = '';
+                document.getElementById('category').value = '';
+                document.getElementById('date').value = '';
+                document.getElementById('videoUrl').value = '';
+                document.getElementById('instaLink').value = '';
+                document.getElementById('images').value = '';
+                
+                alert('포스트가 저장되었습니다!');
+                loadPosts();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('포스트 저장 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 포스트 로드 함수
+        async function loadPosts() {
+            try {
+                // 포스트 데이터 가져오기
+                const { data: posts, error: postsError } = await supabase
+                    .from('posts')
+                    .select('*')
+                    .order('date', { ascending: false });
+
+                if (postsError) throw postsError;
+
+                const postsContainer = document.getElementById('posts');
+                postsContainer.innerHTML = '';
+
+                // 각 포스트의 이미지 가져오기
+                for (const post of posts) {
+                    const { data: images, error: imagesError } = await supabase
+                        .from('images')
+                        .select('image_url')
+                        .eq('post_id', post.id);
+
+                    if (imagesError) throw imagesError;
+
+                    const postElement = createPostElement(post, images);
+                    postsContainer.appendChild(postElement);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('포스트를 불러오는 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 포스트 엘리먼트 생성 함수
+        function createPostElement(post, images) {
+            const div = document.createElement('div');
+            div.className = 'post';
+            div.innerHTML = `
+                <h2>${post.title}</h2>
+                <p class="category">${post.category}</p>
+                <p class="date">${post.date}</p>
+                <div class="post-content">${post.content}</div>
+                <div class="post-images">
+                    ${images.map(img => `<img src="${img.image_url}" alt="포스트 이미지" onclick="openModal(this.src)">`).join('')}
+                </div>
+                ${post.video_url ? `<div class="video-container">
+                    <iframe src="${post.video_url}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>` : ''}
+                ${post.insta_link ? `<a href="${post.insta_link}" target="_blank" class="insta-link">인스타그램 보기</a>` : ''}
+            `;
+            return div;
+        }
+
+        // 모달 관련 함수들
+        function openModal(imageSrc) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            modal.style.display = "block";
+            modalImg.src = imageSrc;
+        }
+
+        function closeModal() {
+            document.getElementById('imageModal').style.display = "none";
+        }
+
+        // 게시물 작성 폼 관련 함수들
+        function openPostForm() {
+            document.getElementById('postFormModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePostForm() {
+            document.getElementById('postFormModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+            document.getElementById('title').value = '';
+            document.getElementById('content').value = '';
+            document.getElementById('category').value = '';
+            document.getElementById('date').value = '';
+            document.getElementById('videoUrl').value = '';
+            document.getElementById('instaLink').value = '';
+            document.getElementById('images').value = '';
+        }
+
+        // 페이지 로드 시 포스트 불러오기
+        window.addEventListener('DOMContentLoaded', () => {
+            loadPosts();
+        });
+
+        // 검색 기능 수정
+        const searchInput = document.getElementById('searchInput');
+        const categoryFilter = document.getElementById('categoryFilter');
+
+        function filterPosts() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedCategory = categoryFilter.value;
+            const posts = document.querySelectorAll('.post');
+            
+            posts.forEach(post => {
+                const title = post.querySelector('h2').textContent.toLowerCase();
+                const content = post.querySelector('.post-content').textContent.toLowerCase();
+                const category = post.querySelector('.category').textContent;
+                
+                const matchesSearch = title.includes(searchTerm) || content.includes(searchTerm);
+                const matchesCategory = !selectedCategory || category === selectedCategory;
+                
+                post.style.display = matchesSearch && matchesCategory ? 'block' : 'none';
+            });
+        }
+
+        searchInput.addEventListener('input', filterPosts);
+        categoryFilter.addEventListener('change', filterPosts);
+    </script>
+</body>
+</html> 
