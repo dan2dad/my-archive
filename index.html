@@ -504,9 +504,10 @@
 
     <script>
         // Supabase 초기화
-        const supabaseUrl = 'https://oqsxcqdjvhejzpgejahz.supabase.co'
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xc3hjcWRqdmhlanpwZ2VqYWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1NDI1NDYsImV4cCI6MjA1ODExODU0Nn0.bimQtRAYdZ-3gVOtbfKudzhkmM-9I2VfXhw5sreLYR4'
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey)
+        const supabaseUrl = 'https://oqsxcqdjvhejzpgejahz.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xc3hjcWRqdmhlanpwZ2VqYWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1NDI1NDYsImV4cCI6MjA1ODExODU0Nn0.bimQtRAYdZ-3gVOtbfKudzhkmM-9I2VfXhw5sreLYR4';
+        const { createClient } = supabase;
+        const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
         // 로딩 표시기 요소
         const loadingIndicator = document.getElementById('loadingIndicator');
@@ -532,7 +533,7 @@
                 }
 
                 // 1. 포스트 데이터 저장
-                const { data: post, error: postError } = await supabase
+                const { data: post, error: postError } = await supabaseClient
                     .from('posts')
                     .insert([
                         {
@@ -558,19 +559,19 @@
                         const filePath = `${fileName}`;
 
                         // 이미지 업로드
-                        const { error: uploadError } = await supabase.storage
+                        const { error: uploadError } = await supabaseClient.storage
                             .from('images')
                             .upload(filePath, file);
 
                         if (uploadError) throw uploadError;
 
                         // 이미지 URL 가져오기
-                        const { data: { publicUrl } } = supabase.storage
+                        const { data: { publicUrl } } = supabaseClient.storage
                             .from('images')
                             .getPublicUrl(filePath);
 
                         // 이미지 데이터베이스에 저장
-                        const { error: imageError } = await supabase
+                        const { error: imageError } = await supabaseClient
                             .from('images')
                             .insert([
                                 {
@@ -608,7 +609,7 @@
         async function loadPosts() {
             try {
                 // 포스트 데이터 가져오기
-                const { data: posts, error: postsError } = await supabase
+                const { data: posts, error: postsError } = await supabaseClient
                     .from('posts')
                     .select('*')
                     .order('date', { ascending: false });
@@ -620,7 +621,7 @@
 
                 // 각 포스트의 이미지 가져오기
                 for (const post of posts) {
-                    const { data: images, error: imagesError } = await supabase
+                    const { data: images, error: imagesError } = await supabaseClient
                         .from('images')
                         .select('image_url')
                         .eq('post_id', post.id);
