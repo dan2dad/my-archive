@@ -7,7 +7,7 @@
     <!-- Noto Sans KR 폰트 추가 (Light 300, Regular 400, Bold 700) -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
     <!-- Supabase JS -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         /* 기본 스타일 */
         * {
@@ -506,8 +506,7 @@
         // Supabase 초기화
         const supabaseUrl = 'https://oqsxcqdjvhejzpgejahz.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xc3hjcWRqdmhlanpwZ2VqYWh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1NDI1NDYsImV4cCI6MjA1ODExODU0Nn0.bimQtRAYdZ-3gVOtbfKudzhkmM-9I2VfXhw5sreLYR4';
-        const { createClient } = supabase;
-        const supabaseClient = createClient(supabaseUrl, supabaseKey);
+        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         // 로딩 표시기 요소
         const loadingIndicator = document.getElementById('loadingIndicator');
