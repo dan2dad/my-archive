@@ -525,8 +525,8 @@
                 const instaLink = document.getElementById('instaLink').value;
                 const imageFiles = document.getElementById('images').files;
 
-                if (!title || !content || !category || !date) {
-                    alert('필수 항목을 모두 입력해주세요.');
+                if (!title || !content) {
+                    alert('제목과 내용을 입력해주세요.');
                     loadingIndicator.style.display = 'none';
                     return;
                 }
@@ -538,10 +538,10 @@
                         {
                             title,
                             content,
-                            category,
-                            date,
-                            video_url: videoUrl,
-                            insta_link: instaLink
+                            category: category || '미분류',
+                            date: date || new Date().toISOString().split('T')[0],
+                            video_url: videoUrl || null,
+                            insta_link: instaLink || null
                         }
                     ])
                     .select()
@@ -607,16 +607,16 @@
         // 포스트 로드 함수
         async function loadPosts() {
             try {
-                // 포스트 데이터 가져오기
+                // 포스트 데이터 가져오기 (created_at으로 정렬)
                 const { data: posts, error: postsError } = await supabaseClient
                     .from('posts')
                     .select('*')
-                    .order('date', { ascending: false });
+                    .order('id', { ascending: false });
 
                 if (postsError) throw postsError;
 
                 const postsContainer = document.getElementById('posts');
-                postsContainer.innerHTML = '';
+                postsContainer.innerHTML = ''; // 기존 포스트 모두 제거
 
                 // 각 포스트의 이미지 가져오기
                 for (const post of posts) {
@@ -627,7 +627,7 @@
 
                     if (imagesError) throw imagesError;
 
-                    const postElement = createPostElement(post, images);
+                    const postElement = createPostElement(post, images || []);
                     postsContainer.appendChild(postElement);
                 }
             } catch (error) {
